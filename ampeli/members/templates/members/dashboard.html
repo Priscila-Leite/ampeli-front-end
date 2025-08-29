@@ -1,0 +1,211 @@
+{% extends 'members/base.html' %}
+
+{% block title %}Dashboard - Ampeli{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard
+    </h1>
+    <div>
+        <button class="btn btn-primary" onclick="syncInChurchData()">
+            <i class="fas fa-sync me-2"></i>Sincronizar Dados
+        </button>
+    </div>
+</div>
+
+<!-- Estatísticas principais -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card border-primary">
+            <div class="stat-number text-primary">{{ total_members }}</div>
+            <div class="stat-label">Total de Membros</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card border-success">
+            <div class="stat-number text-success">{{ active_members }}</div>
+            <div class="stat-label">Membros Ativos</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card border-warning">
+            <div class="stat-number text-warning">{{ inactive_members }}</div>
+            <div class="stat-label">Membros Inativos</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card border-info">
+            <div class="stat-number text-info">{{ visitors }}</div>
+            <div class="stat-label">Visitantes</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Gráfico de distribuição de membros -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Distribuição de Membros
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="memberDistributionChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Membros recentes -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Novos Membros
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="stat-number text-success">{{ recent_members }}</div>
+                <div class="stat-label">Últimos 30 dias</div>
+                <a href="{% url 'members:member_list' %}?status=active" class="btn btn-outline-primary btn-sm mt-3">
+                    Ver todos os membros
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grupos mais ativos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-layer-group me-2"></i>Grupos Mais Ativos
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if active_groups %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nome do Grupo</th>
+                                    <th>Tipo</th>
+                                    <th>Membros</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for group in active_groups %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ group.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ group.get_group_type_display }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ group.member_count }} membros</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'members:group_detail' group.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhum grupo encontrado</p>
+                        <a href="{% url 'members:groups_list' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Gerenciar Grupos
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'members:member_list' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-users fa-2x mb-2 d-block"></i>
+                            Gerenciar Membros
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'members:groups_list' %}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-layer-group fa-2x mb-2 d-block"></i>
+                            Gerenciar Grupos
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'members:analytics' %}" class="btn btn-outline-info w-100 py-3">
+                            <i class="fas fa-chart-bar fa-2x mb-2 d-block"></i>
+                            Ver Relatórios
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button onclick="syncInChurchData()" class="btn btn-outline-warning w-100 py-3">
+                            <i class="fas fa-sync fa-2x mb-2 d-block"></i>
+                            Sincronizar API
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Gráfico de distribuição de membros
+    const ctx = document.getElementById('memberDistributionChart').getContext('2d');
+    const memberDistributionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Ativos', 'Inativos', 'Visitantes'],
+            datasets: [{
+                data: [{{ active_members }}, {{ inactive_members }}, {{ visitors }}],
+                backgroundColor: [
+                    '#27ae60',
+                    '#f39c12',
+                    '#3498db'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

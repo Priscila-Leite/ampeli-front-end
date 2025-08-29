@@ -1,0 +1,358 @@
+{% extends 'members/base.html' %}
+
+{% block title %}{{ member.full_name }} - Detalhes do Membro{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'members:member_list' %}">Membros</a></li>
+                <li class="breadcrumb-item active">{{ member.full_name }}</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-user me-2 text-primary"></i>{{ member.full_name }}
+        </h1>
+    </div>
+    <div>
+        <a href="{% url 'members:member_profile' member.id %}" class="btn btn-primary">
+            <i class="fas fa-id-card me-2"></i>Ver Perfil Completo
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informações básicas -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Informações Básicas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="avatar-large mx-auto mb-3">
+                        <i class="fas fa-user fa-3x"></i>
+                    </div>
+                    <h5>{{ member.full_name }}</h5>
+                    {% if member.member_status == 'active' %}
+                        <span class="badge bg-success">Membro Ativo</span>
+                    {% elif member.member_status == 'inactive' %}
+                        <span class="badge bg-warning">Membro Inativo</span>
+                    {% else %}
+                        <span class="badge bg-info">Visitante</span>
+                    {% endif %}
+                </div>
+
+                <div class="info-list">
+                    {% if member.age %}
+                        <div class="info-item">
+                            <i class="fas fa-birthday-cake text-muted me-2"></i>
+                            <span>{{ member.age }} anos</span>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.gender %}
+                        <div class="info-item">
+                            <i class="fas fa-venus-mars text-muted me-2"></i>
+                            <span>{{ member.gender }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.marital_status %}
+                        <div class="info-item">
+                            <i class="fas fa-heart text-muted me-2"></i>
+                            <span>{{ member.marital_status }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.entry_date %}
+                        <div class="info-item">
+                            <i class="fas fa-calendar-plus text-muted me-2"></i>
+                            <span>Membro desde {{ member.entry_date|date:"d/m/Y" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contato -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-address-book me-2"></i>Contato
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="info-list">
+                    {% if member.email %}
+                        <div class="info-item">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <a href="mailto:{{ member.email }}">{{ member.email }}</a>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.phone %}
+                        <div class="info-item">
+                            <i class="fas fa-phone text-success me-2"></i>
+                            <a href="tel:{{ member.phone }}">{{ member.phone }}</a>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.address %}
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                            <span>{{ member.address }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.neighborhood %}
+                        <div class="info-item">
+                            <i class="fas fa-map text-info me-2"></i>
+                            <span>{{ member.neighborhood }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engajamento -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Engajamento
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="engagement-score">
+                        {{ member.engagement_score }}
+                    </div>
+                    <small class="text-muted">Score de Engajamento</small>
+                </div>
+                
+                <div class="info-list">
+                    {% if member.last_activity %}
+                        <div class="info-item">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            <span>Última atividade: {{ member.last_activity|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.last_attendance %}
+                        <div class="info-item">
+                            <i class="fas fa-calendar-check text-success me-2"></i>
+                            <span>Última presença: {{ member.last_attendance|date:"d/m/Y" }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="info-item">
+                        <i class="fas fa-users text-primary me-2"></i>
+                        <span>{{ current_participations.count }} participação(ões) ativa(s)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Participações atuais -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-layer-group me-2"></i>Participações Atuais
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if current_participations %}
+                    <div class="list-group list-group-flush">
+                        {% for participation in current_participations %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ participation.group.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ participation.group.get_group_type_display }} - {{ participation.get_role_display }}
+                                    </small>
+                                </div>
+                                <a href="{% url 'members:group_detail' participation.group.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-layer-group fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Nenhuma participação ativa</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Áreas de interesse -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-heart me-2"></i>Áreas de Interesse
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if interests %}
+                    <div class="row">
+                        {% for interest in interests %}
+                            <div class="col-md-6 mb-2">
+                                <span class="badge bg-primary">{{ interest.interest_area.name }}</span>
+                                <small class="text-muted">(Nível {{ interest.level }})</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-heart fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Nenhuma área de interesse registrada</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Presenças recentes -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>Presenças Recentes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_attendances %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Evento</th>
+                                    <th>Tipo</th>
+                                    <th>Data</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in recent_attendances %}
+                                <tr>
+                                    <td>{{ attendance.event_name }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ attendance.get_event_type_display }}</span>
+                                    </td>
+                                    <td>{{ attendance.event_date|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {% if attendance.attended %}
+                                            <span class="badge bg-success">Presente</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Ausente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma presença registrada recentemente</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informações extras -->
+{% if member.gifts_aptitudes or member.prayer_requests or member.testimonies %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Informações Adicionais
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if member.gifts_aptitudes %}
+                        <div class="col-md-4 mb-3">
+                            <h6><i class="fas fa-star text-warning me-2"></i>Dons e Aptidões</h6>
+                            <p class="text-muted">{{ member.gifts_aptitudes }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.prayer_requests %}
+                        <div class="col-md-4 mb-3">
+                            <h6><i class="fas fa-praying-hands text-primary me-2"></i>Pedidos de Oração</h6>
+                            <p class="text-muted">{{ member.prayer_requests }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.testimonies %}
+                        <div class="col-md-4 mb-3">
+                            <h6><i class="fas fa-quote-left text-success me-2"></i>Testemunhos</h6>
+                            <p class="text-muted">{{ member.testimonies }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avatar-large {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .info-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .info-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .engagement-score {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
