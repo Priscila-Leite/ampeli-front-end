@@ -1,0 +1,516 @@
+{% extends 'members/base.html' %}
+
+{% block title %}Analytics - Ampeli{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-chart-bar me-2 text-primary"></i>Analytics e Relatórios
+    </h1>
+    <div>
+        <button class="btn btn-primary" onclick="syncInChurchData()">
+            <i class="fas fa-sync me-2"></i>Atualizar Dados
+        </button>
+    </div>
+</div>
+
+<!-- Métricas Principais -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card analytics-card border-primary">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                <h3 class="text-primary">{{ status_distribution|length }}</h3>
+                <p class="text-muted mb-0">Total de Categorias</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card analytics-card border-success">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                <h3 class="text-success">{{ monthly_engagement|length }}</h3>
+                <p class="text-muted mb-0">Meses de Dados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card analytics-card border-info">
+            <div class="card-body text-center">
+                <i class="fas fa-birthday-cake fa-3x text-info mb-3"></i>
+                <h3 class="text-info">{{ age_ranges|length }}</h3>
+                <p class="text-muted mb-0">Faixas Etárias</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card analytics-card border-warning">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-check fa-3x text-warning mb-3"></i>
+                <h3 class="text-warning">
+                    {% for engagement in monthly_engagement %}
+                        {% if forloop.last %}{{ engagement.count }}{% endif %}
+                    {% empty %}0{% endfor %}
+                </h3>
+                <p class="text-muted mb-0">Presenças Recentes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Distribuição por Status -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Distribuição por Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="200"></canvas>
+                <div class="mt-3">
+                    {% for status in status_distribution %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>
+                                {% if status.member_status == 'active' %}
+                                    <i class="fas fa-circle text-success me-2"></i>Ativos
+                                {% elif status.member_status == 'inactive' %}
+                                    <i class="fas fa-circle text-warning me-2"></i>Inativos
+                                {% else %}
+                                    <i class="fas fa-circle text-info me-2"></i>Visitantes
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-secondary">{{ status.count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribuição por Faixa Etária -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Distribuição por Idade
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="ageChart" height="200"></canvas>
+                <div class="mt-3">
+                    {% for age_range, count in age_ranges.items %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>
+                                <i class="fas fa-circle text-primary me-2"></i>{{ age_range }} anos
+                            </span>
+                            <span class="badge bg-secondary">{{ count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Engajamento Mensal -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Engajamento Mensal (Últimos 12 meses)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="engagementChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Jornada do Usuário - Analytics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-route me-2"></i>Análise da Jornada do Usuário
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <div class="journey-metric text-center">
+                            <div class="metric-icon bg-primary">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h6 class="mt-2">Primeiro Login</h6>
+                            <div class="metric-value">
+                                {% for status in status_distribution %}
+                                    {% if forloop.first %}{{ status.count }}{% endif %}
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">Novos usuários</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <div class="journey-metric text-center">
+                            <div class="metric-icon bg-info">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <h6 class="mt-2">Formulário</h6>
+                            <div class="metric-value">85%</div>
+                            <small class="text-muted">Taxa de conclusão</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <div class="journey-metric text-center">
+                            <div class="metric-icon bg-success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h6 class="mt-2">Aceite Termos</h6>
+                            <div class="metric-value">92%</div>
+                            <small class="text-muted">Taxa de aceite</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <div class="journey-metric text-center">
+                            <div class="metric-icon bg-warning">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <h6 class="mt-2">Teste Vocacional</h6>
+                            <div class="metric-value">67%</div>
+                            <small class="text-muted">Taxa de conclusão</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <div class="journey-metric text-center">
+                            <div class="metric-icon bg-purple">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h6 class="mt-2">Engajamento</h6>
+                            <div class="metric-value">45%</div>
+                            <small class="text-muted">Participação ativa</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <div class="journey-metric text-center">
+                            <div class="metric-icon bg-danger">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <h6 class="mt-2">Fidelização</h6>
+                            <div class="metric-value">78%</div>
+                            <small class="text-muted">Retenção</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insights e Recomendações -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Insights e Recomendações
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="insight-item">
+                    <div class="insight-icon bg-success">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h6>Crescimento de Membros Ativos</h6>
+                        <p class="text-muted mb-0">O número de membros ativos aumentou 15% no último trimestre. Continue investindo em programas de engajamento.</p>
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-icon bg-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h6>Taxa de Conclusão do Teste Vocacional</h6>
+                        <p class="text-muted mb-0">Apenas 67% dos membros completam o teste vocacional. Considere simplificar o processo ou adicionar incentivos.</p>
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-icon bg-info">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="insight-content">
+                        <h6>Oportunidade de Engajamento</h6>
+                        <p class="text-muted mb-0">55% dos membros ainda não participam ativamente de grupos. Implemente um programa de mentoria para aumentar a participação.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Recomendadas -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>Ações Recomendadas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="action-item">
+                    <div class="action-priority high"></div>
+                    <div>
+                        <h6>Contatar Membros Inativos</h6>
+                        <small class="text-muted">Prioridade Alta</small>
+                    </div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-priority medium"></div>
+                    <div>
+                        <h6>Revisar Teste Vocacional</h6>
+                        <small class="text-muted">Prioridade Média</small>
+                    </div>
+                </div>
+                
+                <div class="action-item">
+                    <div class="action-priority low"></div>
+                    <div>
+                        <h6>Criar Novos Grupos</h6>
+                        <small class="text-muted">Prioridade Baixa</small>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-download me-2"></i>Exportar Relatório
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .analytics-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .journey-metric {
+        padding: 15px;
+        border-radius: 10px;
+        background: #f8f9fa;
+    }
+    
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin: 0 auto;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+    
+    .bg-purple {
+        background-color: #6f42c1 !important;
+    }
+    
+    .insight-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .insight-item:last-child {
+        border-bottom: none;
+    }
+    
+    .insight-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .action-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .action-item:last-child {
+        border-bottom: none;
+    }
+    
+    .action-priority {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .action-priority.high {
+        background-color: #dc3545;
+    }
+    
+    .action-priority.medium {
+        background-color: #ffc107;
+    }
+    
+    .action-priority.low {
+        background-color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Django data as JSON -->
+{{ status_distribution|json_script:"status-data" }}
+{{ age_ranges|json_script:"age-data" }}
+{{ monthly_engagement|json_script:"engagement-data" }}
+
+<script>
+    // Parse Django data from JSON scripts
+    const statusDistribution = JSON.parse(document.getElementById('status-data').textContent);
+    const ageRanges = JSON.parse(document.getElementById('age-data').textContent);
+    const monthlyEngagement = JSON.parse(document.getElementById('engagement-data').textContent);
+    
+    // Prepare status chart data
+    const statusData = {
+        labels: statusDistribution.map(status => {
+            if (status.member_status === 'active') return 'Ativos';
+            if (status.member_status === 'inactive') return 'Inativos';
+            return 'Visitantes';
+        }),
+        data: statusDistribution.map(status => status.count)
+    };
+    
+    // Gráfico de Status
+    
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusData.labels,
+            datasets: [{
+                data: statusData.data,
+                backgroundColor: ['#28a745', '#ffc107', '#17a2b8'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Prepare age chart data
+    const ageData = {
+        labels: Object.keys(ageRanges),
+        data: Object.values(ageRanges)
+    };
+    
+    // Gráfico de Idade
+    const ageCtx = document.getElementById('ageChart').getContext('2d');
+    const ageChart = new Chart(ageCtx, {
+        type: 'bar',
+        data: {
+            labels: ageData.labels,
+            datasets: [{
+                label: 'Membros',
+                data: ageData.data,
+                backgroundColor: '#3498db',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Prepare engagement chart data
+    const engagementData = {
+        labels: monthlyEngagement.map(item => item.month),
+        data: monthlyEngagement.map(item => item.count)
+    };
+    
+    // Gráfico de Engajamento
+    const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+    const engagementChart = new Chart(engagementCtx, {
+        type: 'line',
+        data: {
+            labels: engagementData.labels,
+            datasets: [{
+                label: 'Presenças',
+                data: engagementData.data,
+                borderColor: '#213429',
+                backgroundColor: 'rgba(44, 62, 80, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

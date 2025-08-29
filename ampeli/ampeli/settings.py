@@ -138,3 +138,8 @@ STATICFILES_DIRS = [
 # Configurações de mídia
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Configurações de autenticação
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/members/'
+LOGOUT_REDIRECT_URL = '/login/'

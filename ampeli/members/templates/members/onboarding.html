@@ -1,0 +1,497 @@
+{% extends 'members/base.html' %}
+{% load static %}
+
+{% block title %}Bem-vindo(a) - Complete seu Perfil{% endblock %}
+
+{% block extra_css %}
+<style>
+    .onboarding-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .onboarding-header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border-radius: 15px;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .section-title {
+        color: var(--primary-color);
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-right: 10px;
+        font-size: 1.5rem;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .form-col {
+        flex: 1;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+    
+    .form-check-custom {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 15px;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        color: white;
+        width: 100%;
+        margin-top: 30px;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .progress-indicator {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .step-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+        }
+        
+        .onboarding-container {
+            padding: 10px;
+        }
+        
+        .section-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="onboarding-container">
+    <div class="onboarding-header">
+        <h1><i class="fas fa-heart"></i> Bem-vindo(a)!</h1>
+        <p class="mb-0">Complete seu perfil para que possamos conhecê-lo melhor e conectá-lo com a comunidade ideal.</p>
+    </div>
+    
+    <div class="progress-indicator">
+        <div class="step-indicator">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Etapa 1 de 2: Perfil Completo</span>
+        </div>
+        <small class="text-muted d-block mt-2">Este formulário leva cerca de 5-10 minutos para completar</small>
+    </div>
+
+    <form method="post" id="onboardingForm">
+        {% csrf_token %}
+        
+        <!-- Dados Básicos -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-user"></i>
+                Dados Básicos
+            </h3>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.full_name.id_for_label }}">
+                            Nome Completo <span class="required">*</span>
+                        </label>
+                        {{ form.full_name }}
+                        {% if form.full_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.birth_date.id_for_label }}">
+                            Data de Nascimento
+                        </label>
+                        {{ form.birth_date }}
+                        {% if form.birth_date.errors %}
+                            <div class="text-danger small mt-1">{{ form.birth_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.gender.id_for_label }}">
+                            Gênero
+                        </label>
+                        {{ form.gender }}
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.marital_status.id_for_label }}">
+                            Estado Civil
+                        </label>
+                        {{ form.marital_status }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contato -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-phone"></i>
+                Contato
+            </h3>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.email.id_for_label }}">
+                            E-mail <span class="required">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.phone.id_for_label }}">
+                            Telefone <span class="required">*</span>
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.contact_preference.id_for_label }}">
+                            Canal Preferencial de Contato
+                        </label>
+                        {{ form.contact_preference }}
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.neighborhood.id_for_label }}">
+                            Bairro
+                        </label>
+                        {{ form.neighborhood }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.address.id_for_label }}">
+                    Endereço
+                </label>
+                {{ form.address }}
+            </div>
+        </div>
+
+        <!-- Background -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-history"></i>
+                Background
+            </h3>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.church_attendance_time.id_for_label }}">
+                            Há quanto tempo frequenta a igreja?
+                        </label>
+                        {{ form.church_attendance_time }}
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.church_discovery.id_for_label }}">
+                            Como conheceu a igreja?
+                        </label>
+                        {{ form.church_discovery }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.church_discovery_other.id_for_label }}">
+                    Especifique como conheceu a igreja (se "Outro")
+                </label>
+                {{ form.church_discovery_other }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.previous_churches.id_for_label }}">
+                    Participou de outras igrejas? Quais?
+                </label>
+                {{ form.previous_churches }}
+            </div>
+        </div>
+
+        <!-- Engajamento -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-hands-helping"></i>
+                Engajamento
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.previous_participation.id_for_label }}">
+                    Já participou de pequenos grupos, ministérios, cursos? (Se sim, quais?)
+                </label>
+                {{ form.previous_participation }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.volunteer_areas.id_for_label }}">
+                    Áreas de interesse (louvor, ensino, ação social, recepção, mídia, etc.)
+                </label>
+                {{ form.volunteer_areas }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.gifts_aptitudes.id_for_label }}">
+                    Habilidades ou dons que gostaria de compartilhar
+                </label>
+                {{ form.gifts_aptitudes }}
+            </div>
+            
+            <div class="form-check-custom">
+                {{ form.volunteer_interest }}
+                <label class="form-check-label ms-2" for="{{ form.volunteer_interest.id_for_label }}">
+                    {{ form.volunteer_interest.label }}
+                </label>
+            </div>
+        </div>
+
+        <!-- Disponibilidade -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-calendar-alt"></i>
+                Disponibilidade
+            </h3>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.available_days.id_for_label }}">
+                            Dias mais disponíveis
+                        </label>
+                        {{ form.available_days }}
+                    </div>
+                </div>
+                <div class="form-col">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.available_times.id_for_label }}">
+                            Horários mais disponíveis
+                        </label>
+                        {{ form.available_times }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.event_preference.id_for_label }}">
+                    Preferência por eventos presenciais ou digitais?
+                </label>
+                {{ form.event_preference }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.community_interests.id_for_label }}">
+                    Interesse em: discipulado/mentoria, comunidade, cursos, evangelismo
+                </label>
+                {{ form.community_interests }}
+            </div>
+        </div>
+
+        <!-- Perfil de Comunidade -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-users"></i>
+                Perfil de Comunidade
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.seeking_in_church.id_for_label }}">
+                    O que busca na igreja neste momento? (crescimento espiritual, amizades, servir, apoio etc.)
+                </label>
+                {{ form.seeking_in_church }}
+            </div>
+            
+            <div class="form-check-custom">
+                {{ form.open_to_new_groups }}
+                <label class="form-check-label ms-2" for="{{ form.open_to_new_groups.id_for_label }}">
+                    {{ form.open_to_new_groups.label }}
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.group_preferences.id_for_label }}">
+                    Preferência por grupos com faixas etárias/temas específicos?
+                </label>
+                {{ form.group_preferences }}
+            </div>
+        </div>
+
+        <!-- Autoavaliação de Maturidade -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-seedling"></i>
+                Autoavaliação de Maturidade
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.faith_stage.id_for_label }}">
+                    Autoidentificação de estágio na fé
+                </label>
+                {{ form.faith_stage }}
+            </div>
+            
+            <div class="form-check-custom">
+                {{ form.pastoral_care_interest }}
+                <label class="form-check-label ms-2" for="{{ form.pastoral_care_interest.id_for_label }}">
+                    {{ form.pastoral_care_interest.label }}
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.faith_challenges.id_for_label }}">
+                    Dificuldades que enfrenta hoje na caminhada cristã
+                </label>
+                {{ form.faith_challenges }}
+            </div>
+        </div>
+
+        <!-- Termos -->
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-check-circle"></i>
+                Confirmação
+            </h3>
+            
+            <div class="form-check-custom">
+                {{ form.terms_accepted }}
+                <label class="form-check-label ms-2" for="{{ form.terms_accepted.id_for_label }}">
+                    {{ form.terms_accepted.label }} <span class="required">*</span>
+                </label>
+                {% if form.terms_accepted.errors %}
+                    <div class="text-danger small mt-1">{{ form.terms_accepted.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-submit">
+            <i class="fas fa-check me-2"></i>
+            Completar Perfil
+        </button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar/ocultar campo "outro" para descoberta da igreja
+    const churchDiscovery = document.getElementById('{{ form.church_discovery.id_for_label }}');
+    const churchDiscoveryOther = document.getElementById('{{ form.church_discovery_other.id_for_label }}').closest('.form-group');
+    
+    function toggleOtherField() {
+        if (churchDiscovery.value === 'other') {
+            churchDiscoveryOther.style.display = 'block';
+        } else {
+            churchDiscoveryOther.style.display = 'none';
+        }
+    }
+    
+    churchDiscovery.addEventListener('change', toggleOtherField);
+    toggleOtherField(); // Executar na inicialização
+    
+    // Validação do formulário
+    const form = document.getElementById('onboardingForm');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor, preencha todos os campos obrigatórios.');
+        }
+    });
+});
+</script>
+{% endblock %}

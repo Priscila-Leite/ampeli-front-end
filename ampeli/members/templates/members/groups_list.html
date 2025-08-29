@@ -1,0 +1,137 @@
+{% extends 'members/base.html' %}
+
+{% block title %}Grupos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-layer-group me-2 text-primary"></i>Grupos e Ministérios
+    </h1>
+    <div>
+        <button class="btn btn-primary" onclick="syncInChurchData()">
+            <i class="fas fa-sync me-2"></i>Sincronizar
+        </button>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <select name="type" class="form-select">
+                    <option value="">Todos os tipos</option>
+                    {% for value, label in group_type_choices %}
+                        <option value="{{ value }}" {% if group_type_filter == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-8">
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>Filtrar
+                    </button>
+                    <a href="{% url 'members:groups_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Limpar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de grupos -->
+<div class="row">
+    {% if groups %}
+        {% for group in groups %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                {% if group.group_type == 'cell' %}
+                                    <i class="fas fa-home me-2"></i>
+                                {% elif group.group_type == 'ministry' %}
+                                    <i class="fas fa-hands-helping me-2"></i>
+                                {% elif group.group_type == 'course' %}
+                                    <i class="fas fa-graduation-cap me-2"></i>
+                                {% else %}
+                                    <i class="fas fa-users me-2"></i>
+                                {% endif %}
+                                {{ group.get_group_type_display }}
+                            </h6>
+                            <span class="badge bg-primary">{{ group.member_count }} membros</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ group.name }}</h5>
+                        {% if group.description %}
+                            <p class="card-text text-muted">{{ group.description|truncatewords:15 }}</p>
+                        {% endif %}
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-users me-1"></i>{{ group.member_count }} participantes
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'members:group_detail' group.id %}" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-eye me-2"></i>Ver Detalhes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum grupo encontrado</h5>
+                    <p class="text-muted">Tente ajustar os filtros ou sincronizar com a API do inChurch</p>
+                    <button onclick="syncInChurchData()" class="btn btn-primary">
+                        <i class="fas fa-sync me-2"></i>Sincronizar Dados
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Estatísticas por tipo -->
+{% if groups %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Distribuição por Tipo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% regroup groups by group_type as groups_by_type %}
+                    {% for group_type in groups_by_type %}
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="stat-number text-primary">{{ group_type.list|length }}</div>
+                                <div class="stat-label">
+                                    {% for choice in group_type_choices %}
+                                        {% if choice.0 == group_type.grouper %}
+                                            {{ choice.1 }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

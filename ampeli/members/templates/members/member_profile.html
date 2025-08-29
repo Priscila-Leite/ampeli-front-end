@@ -1,0 +1,545 @@
+{% extends 'members/base.html' %}
+
+{% block title %}{{ member.full_name }} - Perfil Completo{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'members:member_list' %}">Membros</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'members:member_detail' member.id %}">{{ member.full_name }}</a></li>
+                <li class="breadcrumb-item active">Perfil Completo</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-id-card me-2 text-primary"></i>Perfil Completo - {{ member.full_name }}
+        </h1>
+    </div>
+</div>
+
+<!-- Jornada do Usuário -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-route me-2"></i>Jornada do Membro
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="journey-timeline">
+                    <div class="journey-step {% if member.entry_date %}completed{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="step-content">
+                            <h6>Primeiro Login</h6>
+                            <small class="text-muted">
+                                {% if member.entry_date %}
+                                    Concluído em {{ member.entry_date|date:"d/m/Y" }}
+                                {% else %}
+                                    Pendente
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="journey-step {% if member.phone and member.email %}completed{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="step-content">
+                            <h6>Preenchimento de Formulário</h6>
+                            <small class="text-muted">
+                                {% if member.phone and member.email %}
+                                    Dados básicos completos
+                                {% else %}
+                                    Dados incompletos
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="journey-step {% if member.member_status != 'visitor' %}completed{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="step-content">
+                            <h6>Aceite dos Termos</h6>
+                            <small class="text-muted">
+                                {% if member.member_status != 'visitor' %}
+                                    Membro confirmado
+                                {% else %}
+                                    Ainda visitante
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="journey-step {% if member.gifts_aptitudes %}completed{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <div class="step-content">
+                            <h6>Teste Vocacional</h6>
+                            <small class="text-muted">
+                                {% if member.gifts_aptitudes %}
+                                    Dons identificados
+                                {% else %}
+                                    Não realizado
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="journey-step {% if member.participations.exists %}completed{% endif %}">
+                        <div class="step-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="step-content">
+                            <h6>Engajamento</h6>
+                            <small class="text-muted">
+                                {% if member.participations.exists %}
+                                    Participando de grupos
+                                {% else %}
+                                    Sem participação ativa
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informações Pessoais Detalhadas -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>Informações Pessoais
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="profile-section">
+                    <div class="text-center mb-4">
+                        <div class="profile-avatar mx-auto mb-3">
+                            <i class="fas fa-user fa-4x"></i>
+                        </div>
+                        <h4>{{ member.full_name }}</h4>
+                        <div class="member-badges">
+                            {% if member.member_status == 'active' %}
+                                <span class="badge bg-success">Membro Ativo</span>
+                            {% elif member.member_status == 'inactive' %}
+                                <span class="badge bg-warning">Membro Inativo</span>
+                            {% else %}
+                                <span class="badge bg-info">Visitante</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="profile-details">
+                        <div class="detail-row">
+                            <strong>ID inChurch:</strong>
+                            <span>{{ member.inchurch_id|default:"Não sincronizado" }}</span>
+                        </div>
+                        
+                        {% if member.birth_date %}
+                            <div class="detail-row">
+                                <strong>Data de Nascimento:</strong>
+                                <span>{{ member.birth_date|date:"d/m/Y" }} ({{ member.age }} anos)</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if member.gender %}
+                            <div class="detail-row">
+                                <strong>Gênero:</strong>
+                                <span>{{ member.gender }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if member.marital_status %}
+                            <div class="detail-row">
+                                <strong>Estado Civil:</strong>
+                                <span>{{ member.marital_status }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if member.entry_date %}
+                            <div class="detail-row">
+                                <strong>Membro desde:</strong>
+                                <span>{{ member.entry_date|date:"d/m/Y" }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas de Engajamento -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Métricas de Engajamento
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="engagement-metrics">
+                    <div class="metric-item">
+                        <div class="metric-circle">
+                            <div class="metric-value">{{ member.engagement_score }}</div>
+                            <div class="metric-label">Score</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-calendar-check text-success"></i>
+                            <div>
+                                <strong>{{ total_attendances }}</strong>
+                                <small>Presenças</small>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <i class="fas fa-percentage text-info"></i>
+                            <div>
+                                <strong>{{ attendance_rate }}%</strong>
+                                <small>Taxa de Presença</small>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <i class="fas fa-users text-primary"></i>
+                            <div>
+                                <strong>{{ member.participations.count }}</strong>
+                                <small>Participações</small>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <i class="fas fa-clock text-warning"></i>
+                            <div>
+                                <strong>
+                                    {% if member.last_activity %}
+                                        {{ member.last_activity|timesince }}
+                                    {% else %}
+                                        Nunca
+                                    {% endif %}
+                                </strong>
+                                <small>Última Atividade</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Participações por Tipo -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-layer-group me-2"></i>Participações por Tipo
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if participations_by_type %}
+                    <div class="row">
+                        {% for participation in participations_by_type %}
+                            <div class="col-md-3 mb-3">
+                                <div class="participation-card text-center">
+                                    {% if participation.group__group_type == 'cell' %}
+                                        <i class="fas fa-home fa-2x text-primary mb-2"></i>
+                                        <h6>Células</h6>
+                                    {% elif participation.group__group_type == 'ministry' %}
+                                        <i class="fas fa-hands-helping fa-2x text-success mb-2"></i>
+                                        <h6>Ministérios</h6>
+                                    {% elif participation.group__group_type == 'course' %}
+                                        <i class="fas fa-graduation-cap fa-2x text-info mb-2"></i>
+                                        <h6>Cursos</h6>
+                                    {% else %}
+                                        <i class="fas fa-users fa-2x text-secondary mb-2"></i>
+                                        <h6>Grupos</h6>
+                                    {% endif %}
+                                    <div class="participation-count">{{ participation.count }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma participação registrada</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contato e Localização -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-address-book me-2"></i>Contato
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="contact-info">
+                    {% if member.email %}
+                        <div class="contact-item">
+                            <i class="fas fa-envelope text-primary"></i>
+                            <div>
+                                <strong>E-mail</strong>
+                                <a href="mailto:{{ member.email }}">{{ member.email }}</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.phone %}
+                        <div class="contact-item">
+                            <i class="fas fa-phone text-success"></i>
+                            <div>
+                                <strong>Telefone</strong>
+                                <a href="tel:{{ member.phone }}">{{ member.phone }}</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.address %}
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt text-danger"></i>
+                            <div>
+                                <strong>Endereço</strong>
+                                <span>{{ member.address }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.neighborhood %}
+                        <div class="contact-item">
+                            <i class="fas fa-map text-info"></i>
+                            <div>
+                                <strong>Bairro</strong>
+                                <span>{{ member.neighborhood }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preferências e Disponibilidade -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Preferências
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="preferences-info">
+                    <div class="preference-item">
+                        <i class="fas fa-calendar text-primary"></i>
+                        <div>
+                            <strong>Preferência de Eventos</strong>
+                            <span class="badge bg-info">{{ member.get_event_preference_display }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if member.availability_notes %}
+                        <div class="preference-item">
+                            <i class="fas fa-clock text-warning"></i>
+                            <div>
+                                <strong>Disponibilidade</strong>
+                                <p class="mb-0">{{ member.availability_notes }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if member.gifts_aptitudes %}
+                        <div class="preference-item">
+                            <i class="fas fa-star text-warning"></i>
+                            <div>
+                                <strong>Dons e Aptidões</strong>
+                                <p class="mb-0">{{ member.gifts_aptitudes }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .journey-timeline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .journey-timeline::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #e0e0e0;
+        z-index: 1;
+    }
+    
+    .journey-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        background: white;
+        padding: 0 10px;
+    }
+    
+    .step-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        color: #666;
+    }
+    
+    .journey-step.completed .step-icon {
+        background: var(--success-color);
+        color: white;
+    }
+    
+    .step-content {
+        text-align: center;
+    }
+    
+    .engagement-metrics {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+    }
+    
+    .metric-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    
+    .metric-label {
+        font-size: 0.8rem;
+    }
+    
+    .metric-stats {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .stat-item i {
+        font-size: 1.5rem;
+    }
+    
+    .detail-row, .contact-item, .preference-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .detail-row:last-child, .contact-item:last-child, .preference-item:last-child {
+        border-bottom: none;
+    }
+    
+    .participation-card {
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+    }
+    
+    .participation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .participation-count {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+    
+    @media (max-width: 768px) {
+        .journey-timeline {
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .journey-timeline::before {
+            display: none;
+        }
+        
+        .engagement-metrics {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .metric-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

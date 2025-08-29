@@ -1,42 +1,18 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.paginator import Paginator
-from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import json
-from .models import Member, Group, InterestArea, MemberParticipation, AttendanceRecord
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
+from .models import Member, Group, MemberParticipation, AttendanceRecord, InterestArea, MemberInterest
 from .services import InChurchAPIService
+from .forms import MemberOnboardingForm
 
 
-def dashboard(request):
-    """Dashboard principal com estatísticas dos membros"""
-    total_members = Member.objects.count()
-    active_members = Member.objects.filter(member_status='active').count()
-    inactive_members = Member.objects.filter(member_status='inactive').count()
-    visitors = Member.objects.filter(member_status='visitor').count()
-    
-    # Membros recentes (últimos 30 dias)
-    from datetime import datetime, timedelta
-    thirty_days_ago = datetime.now().date() - timedelta(days=30)
-    recent_members = Member.objects.filter(entry_date__gte=thirty_days_ago).count()
-    
-    # Grupos mais ativos
-    active_groups = Group.objects.filter(is_active=True).annotate(
-        member_count=Count('memberparticipation')
-    ).order_by('-member_count')[:5]
-    
-    context = {
-        'total_members': total_members,
-        'active_members': active_members,
-        'inactive_members': inactive_members,
-        'visitors': visitors,
-        'recent_members': recent_members,
-        'active_groups': active_groups,
-    }
-    return render(request, 'members/dashboard.html', context)
 
 
+@login_required
 def member_list(request):
     """Lista de membros com filtros e busca"""
     members = Member.objects.all()
@@ -69,6 +45,7 @@ def member_list(request):
     return render(request, 'members/member_list.html', context)
 
 
+@login_required
 def member_detail(request, member_id):
     """Detalhes de um membro específico"""
     member = get_object_or_404(Member, id=member_id)
@@ -99,6 +76,7 @@ def member_detail(request, member_id):
     return render(request, 'members/member_detail.html', context)
 
 
+@login_required
 def member_profile(request, member_id):
     """Perfil completo do membro com todas as informações"""
     member = get_object_or_404(Member, id=member_id)
@@ -123,6 +101,7 @@ def member_profile(request, member_id):
     return render(request, 'members/member_profile.html', context)
 
 
+@login_required
 def groups_list(request):
     """Lista de grupos, células e ministérios"""
     groups = Group.objects.filter(is_active=True).annotate(
@@ -142,6 +121,7 @@ def groups_list(request):
     return render(request, 'members/groups_list.html', context)
 
 
+@login_required
 def group_detail(request, group_id):
     """Detalhes de um grupo específico"""
     group = get_object_or_404(Group, id=group_id)
@@ -162,6 +142,7 @@ def group_detail(request, group_id):
     return render(request, 'members/group_detail.html', context)
 
 
+@login_required
 @csrf_exempt
 def sync_inchurch_data(request):
     """Sincronizar dados com a API do inChurch"""
@@ -184,49 +165,52 @@ def sync_inchurch_data(request):
     return JsonResponse({'success': False, 'message': 'Método não permitido'})
 
 
-def analytics(request):
-    """Página de analytics e relatórios"""
-    # Distribuição por status
-    status_distribution = Member.objects.values('member_status').annotate(
-        count=Count('id')
-    )
+
+
+@login_required
+def member_onboarding(request):
+    """Formulário de onboarding para novos membros"""
+    # Verificar se o usuário já tem um perfil de membro
+    try:
+        member = Member.objects.get(email=request.user.email)
+        # Se já tem perfil, redirecionar para lista de membros
+        messages.info(request, 'Você já completou seu cadastro!')
+        return redirect('members:member_list')
+    except Member.DoesNotExist:
+        member = None
     
-    # Distribuição por faixa etária
-    from datetime import datetime
-    current_year = datetime.now().year
-    age_ranges = {
-        '0-17': 0, '18-25': 0, '26-35': 0, '36-50': 0, '51-65': 0, '65+': 0
-    }
+    if request.method == 'POST':
+        form = MemberOnboardingForm(request.POST)
+        
+        if form.is_valid():
+            member = form.save(commit=False)
+            member.email = request.user.email
+            if not member.inchurch_id:
+                # Gerar ID único baseado no email e timestamp
+                import hashlib
+                import time
+                unique_string = f"{request.user.email}_{int(time.time())}"
+                member.inchurch_id = hashlib.md5(unique_string.encode()).hexdigest()[:20]
+            member.save()
+            
+            messages.success(request, 'Perfil completado com sucesso! Bem-vindo à comunidade!')
+            return redirect('members:member_list')
+    else:
+        form = MemberOnboardingForm()
     
-    for member in Member.objects.filter(birth_date__isnull=False):
-        age = member.age
-        if age is not None:
-            if age <= 17:
-                age_ranges['0-17'] += 1
-            elif age <= 25:
-                age_ranges['18-25'] += 1
-            elif age <= 35:
-                age_ranges['26-35'] += 1
-            elif age <= 50:
-                age_ranges['36-50'] += 1
-            elif age <= 65:
-                age_ranges['51-65'] += 1
-            else:
-                age_ranges['65+'] += 1
+    return render(request, 'members/onboarding.html', {
+        'form': form,
+        'is_editing': False
+    })
+
+
+@login_required
+def check_onboarding_status(request):
+    """API endpoint para verificar se usuário completou onboarding"""
+    try:
+        member = Member.objects.get(email=request.user.email)
+        has_completed = True  # Se existe membro, onboarding foi completado
+    except Member.DoesNotExist:
+        has_completed = False
     
-    # Engajamento por mês (últimos 12 meses)
-    from datetime import datetime, timedelta
-    twelve_months_ago = datetime.now().date() - timedelta(days=365)
-    monthly_engagement = AttendanceRecord.objects.filter(
-        event_date__gte=twelve_months_ago,
-        attended=True
-    ).extra(
-        select={'month': "strftime('%%Y-%%m', event_date)"}
-    ).values('month').annotate(count=Count('id')).order_by('month')
-    
-    context = {
-        'status_distribution': status_distribution,
-        'age_ranges': age_ranges,
-        'monthly_engagement': list(monthly_engagement),
-    }
-    return render(request, 'members/analytics.html', context)
+    return JsonResponse({'completed': has_completed})

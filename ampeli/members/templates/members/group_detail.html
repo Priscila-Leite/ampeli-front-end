@@ -1,0 +1,240 @@
+{% extends 'members/base.html' %}
+
+{% block title %}{{ group.name }} - Detalhes do Grupo{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'members:groups_list' %}">Grupos</a></li>
+                <li class="breadcrumb-item active">{{ group.name }}</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-0">
+            {% if group.group_type == 'cell' %}
+                <i class="fas fa-home me-2 text-primary"></i>
+            {% elif group.group_type == 'ministry' %}
+                <i class="fas fa-hands-helping me-2 text-primary"></i>
+            {% elif group.group_type == 'course' %}
+                <i class="fas fa-graduation-cap me-2 text-primary"></i>
+            {% else %}
+                <i class="fas fa-users me-2 text-primary"></i>
+            {% endif %}
+            {{ group.name }}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informações do grupo -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Informações do Grupo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="info-list">
+                    <div class="info-item">
+                        <i class="fas fa-tag text-primary me-2"></i>
+                        <span><strong>Tipo:</strong> {{ group.get_group_type_display }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="fas fa-users text-success me-2"></i>
+                        <span><strong>Membros:</strong> {{ current_members.count }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="fas fa-crown text-warning me-2"></i>
+                        <span><strong>Líderes:</strong> {{ leaders.count }}</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <i class="fas fa-circle text-success me-2"></i>
+                        <span><strong>Status:</strong> 
+                            {% if group.is_active %}
+                                <span class="badge bg-success">Ativo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inativo</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                {% if group.description %}
+                    <div class="mt-3">
+                        <h6><i class="fas fa-align-left me-2"></i>Descrição</h6>
+                        <p class="text-muted">{{ group.description }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Líderes -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-crown me-2"></i>Liderança
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if leaders %}
+                    <div class="row">
+                        {% for leader in leaders %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center p-3 border rounded">
+                                    <div class="avatar-circle me-3">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">{{ leader.member.full_name }}</h6>
+                                        <small class="text-muted">{{ leader.get_role_display }}</small>
+                                        {% if leader.member.phone %}
+                                            <br><small class="text-muted">
+                                                <i class="fas fa-phone me-1"></i>{{ leader.member.phone }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ms-auto">
+                                        <a href="{% url 'members:member_detail' leader.member.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-crown fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Nenhum líder designado</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Membros do grupo -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>Membros do Grupo
+                    <span class="badge bg-primary ms-2">{{ current_members.count }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if current_members %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Função</th>
+                                    <th>Contato</th>
+                                    <th>Data de Início</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for participation in current_members %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-3">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div>
+                                                <strong>{{ participation.member.full_name }}</strong>
+                                                {% if participation.member.age %}
+                                                    <br><small class="text-muted">{{ participation.member.age }} anos</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if participation.role == 'leader' %}
+                                            <span class="badge bg-warning">{{ participation.get_role_display }}</span>
+                                        {% elif participation.role == 'coordinator' %}
+                                            <span class="badge bg-info">{{ participation.get_role_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ participation.get_role_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if participation.member.phone %}
+                                            <div><i class="fas fa-phone me-1"></i>{{ participation.member.phone }}</div>
+                                        {% endif %}
+                                        {% if participation.member.email %}
+                                            <div><i class="fas fa-envelope me-1"></i>{{ participation.member.email }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if participation.start_date %}
+                                            {{ participation.start_date|date:"d/m/Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Não informado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'members:member_detail' participation.member.id %}" 
+                                           class="btn btn-sm btn-outline-primary" title="Ver perfil">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum membro no grupo</h5>
+                        <p class="text-muted">Este grupo ainda não possui membros ativos</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .info-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .info-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}

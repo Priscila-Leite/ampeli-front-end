@@ -9,7 +9,14 @@ class Member(models.Model):
     full_name = models.CharField(max_length=200, verbose_name="Nome Completo")
     gender = models.CharField(max_length=20, blank=True, verbose_name="Gênero")
     birth_date = models.DateField(null=True, blank=True, verbose_name="Data de Nascimento")
-    marital_status = models.CharField(max_length=50, blank=True, verbose_name="Estado Civil")
+    MARITAL_STATUS_CHOICES = [
+        ('single', 'Solteiro(a)'),
+        ('married', 'Casado(a)'),
+        ('divorced', 'Divorciado(a)'),
+        ('widowed', 'Viúvo(a)'),
+        ('other', 'Outro'),
+    ]
+    marital_status = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, blank=True, verbose_name="Estado Civil")
     phone = models.CharField(max_length=20, blank=True, verbose_name="Telefone")
     email = models.EmailField(blank=True, verbose_name="E-mail")
     address = models.TextField(blank=True, verbose_name="Endereço")
@@ -20,28 +27,70 @@ class Member(models.Model):
         ('active', 'Ativo'),
         ('inactive', 'Inativo'),
         ('visitor', 'Visitante'),
+        ('new', 'Novo'),
     ]
     member_status = models.CharField(max_length=20, choices=MEMBER_STATUS_CHOICES, default='visitor', verbose_name="Status do Membro")
     entry_date = models.DateField(null=True, blank=True, verbose_name="Data de Entrada")
     last_attendance = models.DateField(null=True, blank=True, verbose_name="Última Presença")
     
     # Preferências
-    PREFERENCE_CHOICES = [
-        ('presencial', 'Presencial'),
-        ('online', 'Online'),
-        ('ambos', 'Ambos'),
+    CONTACT_PREFERENCE_CHOICES = [
+        ('email', 'E-mail'),
+        ('phone', 'Telefone'),
+        ('whatsapp', 'WhatsApp'),
+        ('sms', 'SMS'),
     ]
-    event_preference = models.CharField(max_length=20, choices=PREFERENCE_CHOICES, default='presencial', verbose_name="Preferência de Eventos")
+    contact_preference = models.CharField(max_length=20, choices=CONTACT_PREFERENCE_CHOICES, blank=True, verbose_name="Preferência de Contato")
+    CHURCH_DISCOVERY_CHOICES = [
+        ('indication', 'Indicação de amigo/familiar'),
+        ('event', 'Evento da igreja'),
+        ('social_media', 'Redes sociais'),
+        ('website', 'Site da igreja'),
+        ('location', 'Localização/vizinhança'),
+        ('other', 'Outro'),
+    ]
+    church_discovery = models.CharField(max_length=20, choices=CHURCH_DISCOVERY_CHOICES, blank=True, verbose_name="Como descobriu a igreja")
+    EVENT_PREFERENCE_CHOICES = [
+        ('presential', 'Presencial'),
+        ('online', 'Online'),
+        ('both', 'Ambos'),
+    ]
+    event_preference = models.CharField(max_length=20, choices=EVENT_PREFERENCE_CHOICES, default='presential', verbose_name="Preferência de Eventos")
     availability_notes = models.TextField(blank=True, verbose_name="Disponibilidade")
     
     # Indicadores de engajamento
     last_activity = models.DateTimeField(null=True, blank=True, verbose_name="Última Atividade")
     engagement_score = models.IntegerField(default=0, verbose_name="Score de Engajamento")
     
-    # Dados extras
+    # Dados extras para onboarding
     gifts_aptitudes = models.TextField(blank=True, verbose_name="Dons e Aptidões")
     prayer_requests = models.TextField(blank=True, verbose_name="Pedidos de Oração")
     testimonies = models.TextField(blank=True, verbose_name="Testemunhos")
+    
+    # Campos de onboarding
+    church_attendance_time = models.CharField(max_length=100, blank=True, verbose_name="Há quanto tempo frequenta a igreja")
+    previous_churches = models.TextField(blank=True, verbose_name="Igrejas anteriores")
+    church_discovery_other = models.CharField(max_length=200, blank=True, verbose_name="Como conheceu a igreja (outro)")
+    previous_participation = models.TextField(blank=True, verbose_name="Participações anteriores")
+    volunteer_interest = models.BooleanField(default=False, verbose_name="Interesse em voluntariado")
+    volunteer_areas = models.TextField(blank=True, verbose_name="Áreas de interesse para voluntariado")
+    available_days = models.CharField(max_length=200, blank=True, verbose_name="Dias disponíveis")
+    available_times = models.CharField(max_length=200, blank=True, verbose_name="Horários disponíveis")
+    community_interests = models.TextField(blank=True, verbose_name="Interesses na comunidade")
+    seeking_in_church = models.TextField(blank=True, verbose_name="O que busca na igreja")
+    open_to_new_groups = models.BooleanField(default=True, verbose_name="Aberto a novos grupos")
+    group_preferences = models.TextField(blank=True, verbose_name="Preferências de grupos")
+    
+    FAITH_STAGE_CHOICES = [
+        ('beginner', 'Iniciante na fé'),
+        ('growing', 'Caminhando na fé'),
+        ('active', 'Atuante na fé'),
+        ('mature', 'Maduro na fé'),
+    ]
+    faith_stage = models.CharField(max_length=20, choices=FAITH_STAGE_CHOICES, blank=True, verbose_name="Estágio na fé")
+    pastoral_care_interest = models.BooleanField(default=False, verbose_name="Interesse em acompanhamento pastoral")
+    faith_challenges = models.TextField(blank=True, verbose_name="Dificuldades na caminhada cristã")
+    onboarding_completed = models.BooleanField(default=False, verbose_name="Onboarding completo")
     
     # Metadados
     inchurch_id = models.CharField(max_length=100, unique=True, verbose_name="ID inChurch")
