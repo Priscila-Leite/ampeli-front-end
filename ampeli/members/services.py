@@ -5,6 +5,13 @@ from django.conf import settings
 from django.utils import timezone
 from typing import Dict, List, Optional, Any
 
+import logging
+from logging import getLogger
+
+logger = getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
 
 class AmpeliAPIService:
     """Serviço para integração com a API do Ampeli"""
@@ -72,7 +79,9 @@ class AmpeliAPIService:
             }
             if phone:
                 data["phone"] = phone
-                
+
+            logger.info(f"Registering user on: {self.base_url}/auth/register")    
+            logger.debug(f"Registering user: {data}")
             result = self._make_request('POST', '/auth/register', data)
             return {
                 'success': True,
@@ -190,7 +199,16 @@ class AmpeliAPIService:
     
     def check_user_status(self, user_id: int) -> Dict:
         """Verificar status do usuário"""
-        return self._make_request('GET', f'/auth/status/{user_id}')
+        try:
+            logger.info(f"Checking user status for ID: {user_id}")
+            return self._make_request('GET', f'/auth/status/{user_id}')
+        except Exception as e:
+            logger.error(f"Error checking user status: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao verificar status do usuário'
+            }
     
     def check_email_availability(self, email: str) -> bool:
         """Verificar disponibilidade do email"""
@@ -203,63 +221,123 @@ class AmpeliAPIService:
     
     def change_password(self, user_id: int, current_password: str, new_password: str) -> Dict:
         """Alterar senha do usuário"""
-        data = {
-            "userId": user_id,
-            "currentPassword": current_password,
-            "newPassword": new_password
-        }
-        return self._make_request('POST', '/auth/change-password', data)
+        try:
+            data = {
+                "userId": user_id,
+                "currentPassword": current_password,
+                "newPassword": new_password
+            }
+            logger.info(f"Changing password for user ID: {user_id}")
+            return self._make_request('POST', '/auth/change-password', data)
+        except Exception as e:
+            logger.error(f"Error changing password: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao alterar senha'
+            }
     
     # ==================== USUÁRIOS ====================
     
     def get_all_users(self) -> List[Dict]:
         """Listar todos os usuários"""
-        return self._make_request('GET', '/users')
+        try:
+            logger.info("Fetching all users")
+            return self._make_request('GET', '/users')
+        except Exception as e:
+            logger.error(f"Error fetching all users: {str(e)}")
+            return []
     
     def get_user_by_id(self, user_id: int) -> Dict:
         """Buscar usuário por ID"""
-        return self._make_request('GET', f'/users/{user_id}')
+        try:
+            logger.info(f"Fetching user by ID: {user_id}")
+            return self._make_request('GET', f'/users/{user_id}')
+        except Exception as e:
+            logger.error(f"Error fetching user by ID {user_id}: {str(e)}")
+            return None
     
     def get_user_by_email(self, email: str) -> Dict:
         """Buscar usuário por email"""
-        return self._make_request('GET', f'/users/email/{email}')
+        try:
+            logger.info(f"Fetching user by email: {email}")
+            return self._make_request('GET', f'/users/email/{email}')
+        except Exception as e:
+            logger.error(f"Error fetching user by email {email}: {str(e)}")
+            return None
     
     def create_user(self, name: str, email: str, password: str, phone: str = None) -> Dict:
         """Criar novo usuário"""
-        data = {
-            "name": name,
-            "email": email,
-            "password": password
-        }
-        if phone:
-            data["phone"] = phone
+        try:
+            data = {
+                "name": name,
+                "email": email,
+                "password": password
+            }
+            if phone:
+                data["phone"] = phone
             
-        return self._make_request('POST', '/users', data)
+            logger.info(f"Creating user: {email}")
+            return self._make_request('POST', '/users', data)
+        except Exception as e:
+            logger.error(f"Error creating user {email}: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao criar usuário'
+            }
     
     def update_user(self, user_id: int, name: str, email: str, phone: str = None, password: str = None) -> Dict:
         """Atualizar usuário existente"""
-        data = {
-            "name": name,
-            "email": email
-        }
-        if phone:
-            data["phone"] = phone
-        if password:
-            data["password"] = password
+        try:
+            data = {
+                "name": name,
+                "email": email
+            }
+            if phone:
+                data["phone"] = phone
+            if password:
+                data["password"] = password
             
-        return self._make_request('PUT', f'/users/{user_id}', data)
+            logger.info(f"Updating user ID: {user_id}")
+            return self._make_request('PUT', f'/users/{user_id}', data)
+        except Exception as e:
+            logger.error(f"Error updating user {user_id}: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao atualizar usuário'
+            }
     
     def delete_user(self, user_id: int) -> Dict:
         """Remover usuário"""
-        return self._make_request('DELETE', f'/users/{user_id}')
+        try:
+            logger.info(f"Deleting user ID: {user_id}")
+            return self._make_request('DELETE', f'/users/{user_id}')
+        except Exception as e:
+            logger.error(f"Error deleting user {user_id}: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao remover usuário'
+            }
     
     def authenticate_user(self, email: str, password: str) -> Dict:
         """Autenticar usuário (método alternativo)"""
-        data = {
-            "email": email,
-            "password": password
-        }
-        return self._make_request('POST', '/users/authenticate', data)
+        try:
+            data = {
+                "email": email,
+                "password": password
+            }
+            logger.info(f"Authenticating user: {email}")
+            return self._make_request('POST', '/users/authenticate', data)
+        except Exception as e:
+            logger.error(f"Error authenticating user {email}: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro na autenticação'
+            }
     
     def user_exists(self, email: str) -> bool:
         """Verificar se email já existe"""
@@ -282,11 +360,21 @@ class AmpeliAPIService:
     
     def get_member_by_id(self, member_id: int) -> Dict:
         """Buscar membro por ID"""
-        return self._make_request('GET', f'/members/{member_id}')
+        try:
+            logger.info(f"Fetching member by ID: {member_id}")
+            return self._make_request('GET', f'/members/{member_id}')
+        except Exception as e:
+            logger.error(f"Error fetching member by ID {member_id}: {str(e)}")
+            return None
     
     def get_member_by_user_id(self, user_id: int) -> Dict:
         """Buscar membro por ID do usuário"""
-        return self._make_request('GET', f'/members/user/{user_id}')
+        try:
+            logger.info(f"Fetching member by user ID: {user_id}")
+            return self._make_request('GET', f'/members/user/{user_id}')
+        except Exception as e:
+            logger.error(f"Error fetching member by user ID {user_id}: {str(e)}")
+            return None
     
     def get_member_by_email(self, email: str) -> Dict:
         """Buscar membro por email"""
@@ -298,37 +386,100 @@ class AmpeliAPIService:
     
     def get_members_by_faith_stage(self, faith_stage: str) -> List[Dict]:
         """Buscar membros por estágio da fé"""
-        return self._make_request('GET', f'/members/faith-stage/{faith_stage}')
+        try:
+            logger.info(f"Fetching members by faith stage: {faith_stage}")
+            return self._make_request('GET', f'/members/faith-stage/{faith_stage}')
+        except Exception as e:
+            logger.error(f"Error fetching members by faith stage {faith_stage}: {str(e)}")
+            return []
     
     def get_members_by_interest(self, interest: str) -> List[Dict]:
         """Buscar membros por área de interesse"""
-        return self._make_request('GET', f'/members/interest/{interest}')
+        try:
+            logger.info(f"Fetching members by interest: {interest}")
+            return self._make_request('GET', f'/members/interest/{interest}')
+        except Exception as e:
+            logger.error(f"Error fetching members by interest {interest}: {str(e)}")
+            return []
     
     def get_members_by_volunteer_area(self, area: str) -> List[Dict]:
         """Buscar membros por área de voluntariado"""
-        return self._make_request('GET', f'/members/volunteer-area/{area}')
+        try:
+            logger.info(f"Fetching members by volunteer area: {area}")
+            return self._make_request('GET', f'/members/volunteer-area/{area}')
+        except Exception as e:
+            logger.error(f"Error fetching members by volunteer area {area}: {str(e)}")
+            return []
     
     def create_member(self, member_data: Dict) -> Dict:
         """Criar novo membro"""
-        return self._make_request('POST', '/members', member_data)
+        try:
+            logger.info(f"Creating member: {member_data.get('fullName', 'Unknown')}")
+            logger.debug(f"Member data: {member_data}")
+            return self._make_request('POST', '/members', member_data)
+        except Exception as e:
+            logger.error(f"Error creating member: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao criar membro'
+            }
     
     def update_member(self, member_id: int, member_data: Dict) -> Dict:
         """Atualizar membro existente"""
-        return self._make_request('PUT', f'/members/{member_id}', member_data)
+        try:
+            logger.info(f"Updating member ID: {member_id}")
+            logger.debug(f"Member data: {member_data}")
+            return self._make_request('PUT', f'/members/{member_id}', member_data)
+        except Exception as e:
+            logger.error(f"Error updating member {member_id}: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao atualizar membro'
+            }
     
     def delete_member(self, member_id: int) -> Dict:
         """Remover membro"""
-        return self._make_request('DELETE', f'/members/{member_id}')
+        try:
+            logger.info(f"Deleting member ID: {member_id}")
+            return self._make_request('DELETE', f'/members/{member_id}')
+        except Exception as e:
+            logger.error(f"Error deleting member {member_id}: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao remover membro'
+            }
     
     # ==================== RECOMENDAÇÕES ====================
     
     def get_member_recommendations(self, member_id: int) -> Dict:
         """Gerar recomendações para um membro específico"""
-        return self._make_request('POST', f'/recommendations/member/{member_id}')
+        try:
+            logger.info(f"Getting recommendations for member ID: {member_id}")
+            return self._make_request('POST', f'/recommendations/member/{member_id}')
+        except Exception as e:
+            logger.error(f"Error getting recommendations for member {member_id}: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao gerar recomendações'
+            }
     
     def get_custom_recommendations(self, recommendation_data: Dict) -> Dict:
         """Gerar recomendações customizadas"""
-        return self._make_request('POST', '/recommendations/custom', recommendation_data)
+        try:
+            logger.info("Getting custom recommendations")
+            logger.debug(f"Recommendation data: {recommendation_data}")
+            return self._make_request('POST', '/recommendations/custom', recommendation_data)
+        except Exception as e:
+            logger.error(f"Error getting custom recommendations: {str(e)}")
+            return {
+                'success': False,
+                'error': 'CONNECTION_ERROR',
+                'message': 'Erro ao gerar recomendações customizadas'
+            }
     
     def check_recommendations_health(self) -> Dict:
         """Verificar saúde do serviço LLM"""

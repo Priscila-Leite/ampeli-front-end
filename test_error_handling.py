@@ -58,7 +58,7 @@ def test_login_validation_errors():
     assert result['success'] == False
     assert result['error'] == 'INVALID_EMAIL'
     
-    print("✓ Todos os testes de validacao no login passaram!\n")
+    print("OK - Todos os testes de validacao no login passaram!\n")
 
 def test_api_connection_errors():
     """Testar erros de conexão com API"""
@@ -73,7 +73,7 @@ def test_api_connection_errors():
     result = api_service.login_user("joao@teste.com", "senha123")
     print(f"Login com API: {result.get('error', 'SUCCESS')} - {result['message']}")
     
-    print("✓ Testes de conexao completados!\n")
+    print("OK - Testes de conexao completados!\n")
 
 def test_error_message_quality():
     """Testar qualidade das mensagens de erro"""
@@ -93,9 +93,9 @@ def test_error_message_quality():
         assert result['error'] == expected_error
         assert len(result['message']) > 10  # Mensagem deve ser descritiva
         assert 'success' in result
-        print(f"✓ {expected_error}: {result['message']}")
+        print(f"OK - {expected_error}: {result['message']}")
     
-    print("✓ Todas as mensagens de erro sao descritivas!\n")
+    print("OK - Todas as mensagens de erro sao descritivas!\n")
 
 def main():
     """Executar todos os testes"""
@@ -107,15 +107,15 @@ def main():
         test_api_connection_errors()
         test_error_message_quality()
         
-        print("🎉 TODOS OS TESTES PASSARAM!")
-        print("✓ Validacoes funcionando corretamente")
-        print("✓ Mensagens de erro claras e descritivas")
-        print("✓ Tratamento de erros de API implementado")
+        print("TODOS OS TESTES PASSARAM!")
+        print("OK - Validacoes funcionando corretamente")
+        print("OK - Mensagens de erro claras e descritivas")
+        print("OK - Tratamento de erros de API implementado")
         
     except AssertionError as e:
-        print(f"❌ TESTE FALHOU: {e}")
+        print(f"TESTE FALHOU: {e}")
     except Exception as e:
-        print(f"💥 ERRO INESPERADO: {e}")
+        print(f"ERRO INESPERADO: {e}")
 
 if __name__ == "__main__":
     main()
