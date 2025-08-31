@@ -21,22 +21,29 @@ class CustomLoginView(LoginView):
         """Autenticar via API do Ampeli além do Django"""
         response = super().form_valid(form)
         
-        try:
-            api_service = AmpeliAPIService()
-            # Tentar autenticar via API também
-            api_result = api_service.login_user(
-                email=form.cleaned_data.get('username'),  # Assumindo que username é email
-                password=form.cleaned_data.get('password')
-            )
-            
+        api_service = AmpeliAPIService()
+        # Tentar autenticar via API também
+        api_result = api_service.login_user(
+            email=form.cleaned_data.get('username'),  # Assumindo que username é email
+            password=form.cleaned_data.get('password')
+        )
+        
+        if api_result.get('success'):
             # Armazenar informações da API na sessão
-            if api_result.get('success'):
-                self.request.session['api_user_id'] = api_result.get('user', {}).get('id')
-                self.request.session['api_token'] = api_result.get('token')
-                
-        except Exception as e:
-            # Log do erro mas não impede o login Django
-            messages.warning(self.request, 'Conectado localmente, mas houve problema na sincronização com o servidor.')
+            self.request.session['api_user_id'] = api_result.get('user', {}).get('id')
+            self.request.session['api_token'] = api_result.get('token')
+            messages.success(self.request, 'Login realizado com sucesso!')
+        else:
+            # Tratar erros específicos da API
+            error_type = api_result.get('error', 'UNKNOWN')
+            error_message = api_result.get('message', 'Erro desconhecido')
+            
+            if error_type in ['SERVICE_UNAVAILABLE', 'CONNECTION_ERROR']:
+                messages.warning(self.request, f'Conectado localmente. {error_message}')
+            elif error_type == 'INVALID_CREDENTIALS':
+                messages.info(self.request, 'Conectado localmente, mas credenciais não encontradas no servidor remoto.')
+            else:
+                messages.warning(self.request, f'Problema na sincronização: {error_message}')
         
         return response
     
@@ -58,24 +65,32 @@ class CustomRegisterView(CreateView):
         login(self.request, user)
         
         # Registrar usuário via API do Ampeli
-        try:
-            api_service = AmpeliAPIService()
-            api_result = api_service.register_user(
-                name=user.get_full_name() or user.username,
-                email=user.email,
-                password=password,
-                phone=''
-            )
-            
-            # Armazenar informações da API na sessão
-            if api_result.get('success'):
-                self.request.session['api_user_id'] = api_result.get('user', {}).get('id')
-                self.request.session['api_token'] = api_result.get('token')
-                
-        except Exception as e:
-            messages.warning(self.request, 'Conta criada localmente, mas houve problema na sincronização com o servidor.')
+        api_service = AmpeliAPIService()
+        api_result = api_service.register_user(
+            name=user.get_full_name() or user.username,
+            email=user.email,
+            password=password,
+            phone=''
+        )
         
-        messages.success(self.request, f'Bem-vindo ao Ampeli, {user.first_name or user.username}! Complete seu perfil para uma melhor experiência.')
+        if api_result.get('success'):
+            # Armazenar informações da API na sessão
+            self.request.session['api_user_id'] = api_result.get('user', {}).get('id')
+            self.request.session['api_token'] = api_result.get('token')
+            messages.success(self.request, f'Bem-vindo ao Ampeli, {user.first_name or user.username}! Conta criada com sucesso.')
+        else:
+            # Tratar erros específicos da API
+            error_type = api_result.get('error', 'UNKNOWN')
+            error_message = api_result.get('message', 'Erro desconhecido')
+            
+            if error_type == 'USER_EXISTS':
+                messages.info(self.request, 'Conta criada localmente. Usuário já existe no servidor remoto.')
+            elif error_type in ['SERVICE_UNAVAILABLE', 'CONNECTION_ERROR']:
+                messages.warning(self.request, f'Conta criada localmente. {error_message}')
+            else:
+                messages.warning(self.request, f'Conta criada localmente. Problema na sincronização: {error_message}')
+        
+        messages.info(self.request, 'Complete seu perfil para uma melhor experiência!')
         return redirect('members:member_onboarding')
     
     def form_invalid(self, form):

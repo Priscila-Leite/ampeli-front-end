@@ -161,26 +161,45 @@ def register_user_api(request):
             import json
             data = json.loads(request.body)
             
+            # Validação dos dados recebidos
+            required_fields = ['name', 'email', 'password']
+            for field in required_fields:
+                if not data.get(field):
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'VALIDATION_ERROR',
+                        'message': f'Campo {field} é obrigatório'
+                    })
+            
             api_service = AmpeliAPIService()
             result = api_service.register_user(
                 name=data.get('name'),
                 email=data.get('email'),
                 password=data.get('password'),
-                phone=data.get('phone')
+                phone=data.get('phone', '')
             )
             
+            # Retornar resultado direto do serviço (já inclui tratamento de erro)
+            return JsonResponse(result)
+            
+        except json.JSONDecodeError:
             return JsonResponse({
-                'success': True,
-                'message': 'Usuário registrado com sucesso!',
-                'data': result
+                'success': False,
+                'error': 'INVALID_JSON',
+                'message': 'Formato JSON inválido'
             })
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'message': f'Erro no registro: {str(e)}'
+                'error': 'UNEXPECTED_ERROR',
+                'message': f'Erro inesperado: {str(e)}'
             })
     
-    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+    return JsonResponse({
+        'success': False,
+        'error': 'METHOD_NOT_ALLOWED',
+        'message': 'Método não permitido'
+    })
 
 
 @csrf_exempt
@@ -191,30 +210,50 @@ def login_user_api(request):
             import json
             data = json.loads(request.body)
             
+            # Validação dos dados recebidos
+            required_fields = ['email', 'password']
+            for field in required_fields:
+                if not data.get(field):
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'VALIDATION_ERROR',
+                        'message': f'Campo {field} é obrigatório'
+                    })
+            
             api_service = AmpeliAPIService()
             result = api_service.login_user(
                 email=data.get('email'),
                 password=data.get('password')
             )
             
-            # Armazenar informações do usuário na sessão
+            # Armazenar informações do usuário na sessão se login bem-sucedido
             if result.get('success'):
-                request.session['user_id'] = result.get('user', {}).get('id')
+                request.session['api_user_id'] = result.get('user', {}).get('id')
+                request.session['api_token'] = result.get('token')
                 request.session['user_email'] = result.get('user', {}).get('email')
                 request.session['user_name'] = result.get('user', {}).get('name')
             
+            # Retornar resultado direto do serviço (já inclui tratamento de erro)
+            return JsonResponse(result)
+            
+        except json.JSONDecodeError:
             return JsonResponse({
-                'success': True,
-                'message': 'Login realizado com sucesso!',
-                'data': result
+                'success': False,
+                'error': 'INVALID_JSON',
+                'message': 'Formato JSON inválido'
             })
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'message': f'Erro no login: {str(e)}'
+                'error': 'UNEXPECTED_ERROR',
+                'message': f'Erro inesperado: {str(e)}'
             })
     
-    return JsonResponse({'success': False, 'message': 'Método não permitido'})
+    return JsonResponse({
+        'success': False,
+        'error': 'METHOD_NOT_ALLOWED',
+        'message': 'Método não permitido'
+    })
 
 
 

@@ -41,24 +41,152 @@ class AmpeliAPIService:
     # ==================== AUTENTICAÇÃO ====================
     
     def register_user(self, name: str, email: str, password: str, phone: str = None) -> Dict:
-        """Registrar novo usuário"""
-        data = {
-            "name": name,
-            "email": email,
-            "password": password
-        }
-        if phone:
-            data["phone"] = phone
+        """Registrar novo usuário com tratamento de erros"""
+        try:
+            # Validações básicas
+            if not name or not email or not password:
+                return {
+                    'success': False,
+                    'error': 'VALIDATION_ERROR',
+                    'message': 'Nome, email e senha são obrigatórios'
+                }
             
-        return self._make_request('POST', '/auth/register', data)
+            if '@' not in email or '.' not in email:
+                return {
+                    'success': False,
+                    'error': 'INVALID_EMAIL',
+                    'message': 'Formato de email inválido'
+                }
+            
+            if len(password) < 6:
+                return {
+                    'success': False,
+                    'error': 'WEAK_PASSWORD',
+                    'message': 'Senha deve ter pelo menos 6 caracteres'
+                }
+            
+            data = {
+                "name": name,
+                "email": email,
+                "password": password
+            }
+            if phone:
+                data["phone"] = phone
+                
+            result = self._make_request('POST', '/auth/register', data)
+            return {
+                'success': True,
+                'user': result.get('user', {}),
+                'token': result.get('token', ''),
+                'message': 'Usuário registrado com sucesso'
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Tratamento específico por tipo de erro
+            if '409' in error_msg or 'conflict' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'USER_EXISTS',
+                    'message': 'Este email já está cadastrado'
+                }
+            elif '400' in error_msg or 'bad request' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'INVALID_DATA',
+                    'message': 'Dados inválidos fornecidos'
+                }
+            elif '503' in error_msg or 'service unavailable' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'SERVICE_UNAVAILABLE',
+                    'message': 'Serviço temporariamente indisponível. Tente novamente em alguns minutos.'
+                }
+            elif '500' in error_msg or 'internal server error' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'SERVER_ERROR',
+                    'message': 'Erro interno do servidor. Tente novamente mais tarde.'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'CONNECTION_ERROR',
+                    'message': 'Erro de conexão. Verifique sua internet e tente novamente.'
+                }
     
     def login_user(self, email: str, password: str) -> Dict:
-        """Login de usuário"""
-        data = {
-            "email": email,
-            "password": password
-        }
-        return self._make_request('POST', '/auth/login', data)
+        """Login de usuário com tratamento de erros"""
+        try:
+            # Validações básicas
+            if not email or not password:
+                return {
+                    'success': False,
+                    'error': 'VALIDATION_ERROR',
+                    'message': 'Email e senha são obrigatórios'
+                }
+            
+            if '@' not in email or '.' not in email:
+                return {
+                    'success': False,
+                    'error': 'INVALID_EMAIL',
+                    'message': 'Formato de email inválido'
+                }
+            
+            data = {
+                "email": email,
+                "password": password
+            }
+            
+            result = self._make_request('POST', '/auth/login', data)
+            return {
+                'success': True,
+                'user': result.get('user', {}),
+                'token': result.get('token', ''),
+                'message': 'Login realizado com sucesso'
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Tratamento específico por tipo de erro
+            if '401' in error_msg or 'unauthorized' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'INVALID_CREDENTIALS',
+                    'message': 'Email ou senha incorretos'
+                }
+            elif '404' in error_msg or 'not found' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'USER_NOT_FOUND',
+                    'message': 'Usuário não encontrado'
+                }
+            elif '429' in error_msg or 'too many requests' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'RATE_LIMITED',
+                    'message': 'Muitas tentativas de login. Tente novamente em alguns minutos.'
+                }
+            elif '503' in error_msg or 'service unavailable' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'SERVICE_UNAVAILABLE',
+                    'message': 'Serviço temporariamente indisponível. Tente novamente em alguns minutos.'
+                }
+            elif '500' in error_msg or 'internal server error' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'SERVER_ERROR',
+                    'message': 'Erro interno do servidor. Tente novamente mais tarde.'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'CONNECTION_ERROR',
+                    'message': 'Erro de conexão. Verifique sua internet e tente novamente.'
+                }
     
     def check_user_status(self, user_id: int) -> Dict:
         """Verificar status do usuário"""
