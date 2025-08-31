@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: ampeli
+    env: docker
+    plan: free
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
