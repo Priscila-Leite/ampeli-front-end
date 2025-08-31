@@ -1,18 +1,17 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.core.paginator import Paginator
-from django.db.models import Count, Q
-from .models import Member, Group, MemberParticipation, AttendanceRecord, InterestArea, MemberInterest
-from .services import AmpeliAPIService
+from .models import Member
 from .forms import MemberOnboardingForm
+from .services import AmpeliAPIService
+from .api_auth_views import login_required_api
+import json
 
 
 
 
-@login_required
+@login_required_api
 def member_list(request):
     """Lista de membros com filtros e busca via API"""
     api_service = AmpeliAPIService()
@@ -60,7 +59,7 @@ def member_list(request):
     return render(request, 'members/member_list.html', context)
 
 
-@login_required
+@login_required_api
 def member_detail(request, member_id):
     """Detalhes de um membro específico via API"""
     api_service = AmpeliAPIService()
@@ -87,68 +86,58 @@ def member_detail(request, member_id):
     return render(request, 'members/member_detail.html', context)
 
 
-@login_required
+@login_required_api
 def member_profile(request, member_id):
-    """Perfil completo do membro com todas as informações"""
-    member = get_object_or_404(Member, id=member_id)
+    """Perfil completo do membro com todas as informações via API"""
+    api_service = AmpeliAPIService()
     
-    # Estatísticas de engajamento
-    total_attendances = member.attendances.filter(attended=True).count()
-    total_events = member.attendances.count()
-    attendance_rate = (total_attendances / total_events * 100) if total_events > 0 else 0
+    try:
+        # Buscar membro via API
+        member_data = api_service.get_member_by_id(member_id)
+        
+        if not member_data:
+            messages.error(request, 'Membro não encontrado.')
+            return redirect('members:member_list')
+        
+        context = {
+            'member': member_data,
+            'attendance_rate': member_data.get('attendanceRate', 0),
+            'total_attendances': member_data.get('totalAttendances', 0),
+            'total_events': member_data.get('totalEvents', 0),
+            'participations_by_type': member_data.get('participationsByType', []),
+        }
+    except Exception as e:
+        messages.error(request, f'Erro ao carregar perfil do membro: {str(e)}')
+        return redirect('members:member_list')
     
-    # Participações por tipo
-    participations_by_type = member.participations.values(
-        'group__group_type'
-    ).annotate(count=Count('id'))
-    
-    context = {
-        'member': member,
-        'attendance_rate': round(attendance_rate, 1),
-        'total_attendances': total_attendances,
-        'total_events': total_events,
-        'participations_by_type': participations_by_type,
-    }
     return render(request, 'members/member_profile.html', context)
 
 
-@login_required
+@login_required_api
 def groups_list(request):
-    """Lista de grupos, células e ministérios"""
-    groups = Group.objects.filter(is_active=True).annotate(
-        member_count=Count('memberparticipation')
-    )
+    """Lista de grupos, células e ministérios via API"""
+    # Placeholder - implementar quando API de grupos estiver disponível
+    groups = []
     
     # Filtro por tipo
     group_type_filter = request.GET.get('type')
-    if group_type_filter:
-        groups = groups.filter(group_type=group_type_filter)
     
     context = {
         'groups': groups,
         'group_type_filter': group_type_filter,
-        'group_type_choices': Group.GROUP_TYPE_CHOICES,
+        'group_type_choices': [],
     }
     return render(request, 'members/groups_list.html', context)
 
 
-@login_required
+@login_required_api
 def group_detail(request, group_id):
-    """Detalhes de um grupo específico"""
-    group = get_object_or_404(Group, id=group_id)
-    
-    # Membros atuais do grupo
-    current_members = MemberParticipation.objects.filter(
-        group=group, is_current=True
-    ).select_related('member')
-    
-    # Líderes do grupo
-    leaders = current_members.filter(role__in=['leader', 'coordinator'])
-    
+    """Detalhes de um grupo específico via API"""
+    # Placeholder - implementar quando API de grupos estiver disponível
     context = {
-        'group': group,
-        'current_members': current_members,
-        'leaders': leaders,
+        'group': None,
+        'current_members': [],
+        'leaders': [],
     }
     return render(request, 'members/group_detail.html', context)
 
@@ -258,17 +247,19 @@ def login_user_api(request):
 
 
 
-@login_required
+@login_required_api
 def member_onboarding(request):
     """Formulário de onboarding para novos membros"""
     api_service = AmpeliAPIService()
     
     # Verificar se o usuário já tem um perfil de membro via API
     try:
-        member_data = api_service.get_member_by_email(request.user.email)
-        if member_data:
-            messages.info(request, 'Você já completou seu cadastro!')
-            return redirect('members:member_list')
+        user_email = request.session.get('user_email')
+        if user_email:
+            member_data = api_service.get_member_by_email(user_email)
+            if member_data:
+                messages.info(request, 'Você já completou seu cadastro!')
+                return redirect('members:member_list')
     except Exception:
         # Se não encontrou membro, continua com o onboarding
         pass
@@ -307,13 +298,17 @@ def member_onboarding(request):
     })
 
 
-@login_required
+@login_required_api
 def check_onboarding_status(request):
     """API endpoint para verificar se usuário completou onboarding"""
     try:
         api_service = AmpeliAPIService()
-        member_data = api_service.get_member_by_email(request.user.email)
-        has_completed = bool(member_data)
+        user_email = request.session.get('user_email')
+        if user_email:
+            member_data = api_service.get_member_by_email(user_email)
+            has_completed = bool(member_data)
+        else:
+            has_completed = False
     except Exception:
         has_completed = False
     

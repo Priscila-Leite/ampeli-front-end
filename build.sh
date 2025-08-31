@@ -8,5 +8,5 @@ pip install -r requirements.txt
 # Navigate to Django project directory
 cd ampeli
 
-# Collect static files
+# Collect static files (no database migrations needed)
 python manage.py collectstatic --no-input
