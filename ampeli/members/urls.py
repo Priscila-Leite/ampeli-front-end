@@ -24,6 +24,7 @@ urlpatterns = [
     path('grupos/<int:group_id>/', views.group_detail, name='group_detail'),
     
     # API
-    path('api/sync-inchurch/', views.sync_inchurch_data, name='sync_inchurch'),
+    path('api/register/', views.register_user_api, name='register_user_api'),
+    path('api/login/', views.login_user_api, name='login_user_api'),
     path('api/check-onboarding/', views.check_onboarding_status, name='check_onboarding_status'),
 ]
