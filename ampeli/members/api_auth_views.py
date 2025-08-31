@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.views import View
 from .services import AmpeliAPIService
+from .forms import CustomAuthenticationForm, CustomUserCreationForm
 import json
 
 
@@ -15,7 +16,9 @@ class APILoginView(View):
         # Se já está logado, redirecionar
         if request.session.get('api_user_id'):
             return redirect('members:member_list')
-        return render(request, self.template_name)
+        
+        form = CustomAuthenticationForm()
+        return render(request, self.template_name, {'form': form})
     
     def post(self, request):
         email = request.POST.get('username')  # Usando 'username' do form padrão
@@ -23,7 +26,8 @@ class APILoginView(View):
         
         if not email or not password:
             messages.error(request, 'Email e senha são obrigatórios.')
-            return render(request, self.template_name)
+            form = CustomAuthenticationForm()
+            return render(request, self.template_name, {'form': form})
         
         api_service = AmpeliAPIService()
         result = api_service.login_user(email=email, password=password)
@@ -52,7 +56,8 @@ class APILoginView(View):
             else:
                 messages.error(request, f'Erro no login: {error_message}')
             
-            return render(request, self.template_name)
+            form = CustomAuthenticationForm()
+            return render(request, self.template_name, {'form': form})
 
 
 class APIRegisterView(View):
@@ -63,7 +68,9 @@ class APIRegisterView(View):
         # Se já está logado, redirecionar
         if request.session.get('api_user_id'):
             return redirect('members:member_list')
-        return render(request, self.template_name)
+        
+        form = CustomUserCreationForm()
+        return render(request, self.template_name, {'form': form})
     
     def post(self, request):
         name = request.POST.get('first_name', '') + ' ' + request.POST.get('last_name', '')
@@ -75,11 +82,13 @@ class APIRegisterView(View):
         # Validações básicas
         if not all([name, email, password, password_confirm]):
             messages.error(request, 'Todos os campos são obrigatórios.')
-            return render(request, self.template_name)
+            form = CustomUserCreationForm()
+            return render(request, self.template_name, {'form': form})
         
         if password != password_confirm:
             messages.error(request, 'As senhas não coincidem.')
-            return render(request, self.template_name)
+            form = CustomUserCreationForm()
+            return render(request, self.template_name, {'form': form})
         
         api_service = AmpeliAPIService()
         result = api_service.register_user(name=name, email=email, password=password)
@@ -117,7 +126,8 @@ class APIRegisterView(View):
             else:
                 messages.error(request, f'Erro no cadastro: {error_message}')
             
-            return render(request, self.template_name)
+            form = CustomUserCreationForm()
+            return render(request, self.template_name, {'form': form})
 
 
 def api_logout_view(request):

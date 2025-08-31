@@ -26,9 +26,12 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-u6m27eo*1(fpu1vq)_xw)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*'] if DEBUG else [
-    os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost'),
-    'ampeli-front-end.onrender.com'
+ALLOWED_HOSTS = [
+    '*',
+    'ampeli-front-end.onrender.com',
+    'localhost',
+    '127.0.0.1',
+    os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost')
 ]
 
 
